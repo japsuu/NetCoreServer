@@ -390,7 +390,11 @@ namespace NetCoreServer
         /// </summary>
         /// <param name="buffer">Datagram buffer to send</param>
         /// <returns>Size of sent datagram</returns>
+#if NETSTANDARD
+        public virtual long Send(byte[] buffer) => Send(Endpoint, buffer);
+#else
         public virtual long Send(byte[] buffer) => Send(buffer.AsSpan());
+#endif
 
         /// <summary>
         /// Send datagram to the connected server (synchronous)
@@ -399,14 +403,21 @@ namespace NetCoreServer
         /// <param name="offset">Datagram buffer offset</param>
         /// <param name="size">Datagram buffer size</param>
         /// <returns>Size of sent datagram</returns>
+#if NETSTANDARD
+        public virtual long Send(byte[] buffer, long offset, long size) => Send(Endpoint, buffer, (int)offset, (int)size);
+#else
         public virtual long Send(byte[] buffer, long offset, long size) => Send(buffer.AsSpan((int)offset, (int)size));
+#endif
 
+
+#if !NETSTANDARD
         /// <summary>
         /// Send datagram to the connected server (synchronous)
         /// </summary>
         /// <param name="buffer">Datagram buffer to send as a span of bytes</param>
         /// <returns>Size of sent datagram</returns>
         public virtual long Send(ReadOnlySpan<byte> buffer) => Send(Endpoint, buffer);
+#endif
 
         /// <summary>
         /// Send text to the connected server (synchronous)
@@ -428,8 +439,55 @@ namespace NetCoreServer
         /// <param name="endpoint">Endpoint to send</param>
         /// <param name="buffer">Datagram buffer to send</param>
         /// <returns>Size of sent datagram</returns>
+#if NETSTANDARD
+        public virtual long Send(EndPoint endpoint, byte[] buffer) => Send(endpoint, buffer, 0, buffer.Length);
+#else
         public virtual long Send(EndPoint endpoint, byte[] buffer) => Send(endpoint, buffer.AsSpan());
+#endif
 
+
+#if NETSTANDARD
+        /// <summary>
+        /// Send datagram to the given endpoint (synchronous)
+        /// </summary>
+        /// <param name="endpoint">Endpoint to send</param>
+        /// <param name="buffer">Datagram buffer to send</param>
+        /// <param name="offset">Datagram buffer offset</param>
+        /// <param name="size">Datagram buffer size</param>
+        /// <returns>Size of sent datagram</returns>
+        public virtual long Send(EndPoint endpoint, byte[] buffer, long offset, long size)
+        {
+            if (!IsConnected)
+                return 0;
+
+            if (buffer.Length <= 0)
+                return 0;
+
+            try
+            {
+                // Sent datagram to the server
+                long sent = Socket.SendTo(buffer, (int)offset, (int)size, SocketFlags.None, endpoint);
+                if (sent > 0)
+                {
+                    // Update statistic
+                    DatagramsSent++;
+                    BytesSent += sent;
+
+                    // Call the datagram sent handler
+                    OnSent(endpoint, sent);
+                }
+
+                return sent;
+            }
+            catch (ObjectDisposedException) { return 0; }
+            catch (SocketException ex)
+            {
+                SendError(ex.SocketErrorCode);
+                Disconnect();
+                return 0;
+            }
+        }
+#else
         /// <summary>
         /// Send datagram to the given endpoint (synchronous)
         /// </summary>
@@ -439,7 +497,10 @@ namespace NetCoreServer
         /// <param name="size">Datagram buffer size</param>
         /// <returns>Size of sent datagram</returns>
         public virtual long Send(EndPoint endpoint, byte[] buffer, long offset, long size) => Send(endpoint, buffer.AsSpan((int)offset, (int)size));
+#endif
 
+
+#if !NETSTANDARD
         /// <summary>
         /// Send datagram to the given endpoint (synchronous)
         /// </summary>
@@ -478,6 +539,7 @@ namespace NetCoreServer
                 return 0;
             }
         }
+#endif
 
         /// <summary>
         /// Send text to the given endpoint (synchronous)

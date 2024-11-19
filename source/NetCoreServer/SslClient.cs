@@ -114,6 +114,7 @@ namespace NetCoreServer
         /// This option will setup SO_KEEPALIVE if the OS support this feature
         /// </remarks>
         public bool OptionKeepAlive { get; set; }
+#if !NETSTANDARD    // Not supported in .NET Standard
         /// <summary>
         /// Option: TCP keep alive time
         /// </summary>
@@ -135,6 +136,7 @@ namespace NetCoreServer
         /// The number of TCP keep alive probes that will be sent before the connection is terminated
         /// </remarks>
         public int OptionTcpKeepAliveRetryCount { get; set; } = -1;
+#endif
         /// <summary>
         /// Option: no delay
         /// </summary>
@@ -265,12 +267,14 @@ namespace NetCoreServer
             // Apply the option: keep alive
             if (OptionKeepAlive)
                 Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+#if !NETSTANDARD    // Not supported in .NET Standard
             if (OptionTcpKeepAliveTime >= 0)
                 Socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, OptionTcpKeepAliveTime);
             if (OptionTcpKeepAliveInterval >= 0)
                 Socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, OptionTcpKeepAliveInterval);
             if (OptionTcpKeepAliveRetryCount >= 0)
                 Socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, OptionTcpKeepAliveRetryCount);
+#endif
             // Apply the option: no delay
             if (OptionNoDelay)
                 Socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.NoDelay, true);
@@ -840,12 +844,14 @@ namespace NetCoreServer
                 // Apply the option: keep alive
                 if (OptionKeepAlive)
                     Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+#if !NETSTANDARD    // Not supported in .NET Standard
                 if (OptionTcpKeepAliveTime >= 0)
                     Socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, OptionTcpKeepAliveTime);
                 if (OptionTcpKeepAliveInterval >= 0)
                     Socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, OptionTcpKeepAliveInterval);
                 if (OptionTcpKeepAliveRetryCount >= 0)
                     Socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveRetryCount, OptionTcpKeepAliveRetryCount);
+#endif
                 // Apply the option: no delay
                 if (OptionNoDelay)
                     Socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.NoDelay, true);
